@@ -1,25 +1,18 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # ============================================================
-# AgentStudi - Desinstalador del agente Generador de Cursos
+# AgentStudi - Desinstalador del Generador de Cursos
+# Quita el agente y la skill /gen-curso.
+# Destino: $CLAUDE_CONFIG_DIR si esta definido, si no ~/.claude
 # ============================================================
-
 set -euo pipefail
 
-AGENT_NAME="generador-de-cursos"
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-${HOME}/.claude}"
 
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" || "$OSTYPE" == "win32" ]]; then
-    CLAUDE_DIR="${USERPROFILE}/.claude"
-else
-    CLAUDE_DIR="${HOME}/.claude"
-fi
-
-TARGET_DIR="${CLAUDE_DIR}/agents/${AGENT_NAME}"
-
-if [[ ! -d "${TARGET_DIR}" ]]; then
-    echo "El agente no esta instalado en ${TARGET_DIR}"
-    exit 0
-fi
-
-echo "Desinstalando agente de: ${TARGET_DIR}"
-rm -rf "${TARGET_DIR}"
-echo "Agente desinstalado correctamente."
+for target in "${CLAUDE_DIR}/agents/generador-de-cursos" "${CLAUDE_DIR}/skills/gen-curso"; do
+    if [[ -e "${target}" ]]; then
+        rm -rf "${target}"
+        echo "Eliminado: ${target}"
+    else
+        echo "No estaba instalado: ${target}"
+    fi
+done
