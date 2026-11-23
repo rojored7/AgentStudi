@@ -27,6 +27,7 @@ Asegurar calidad profesional del curso antes de marcarlo como completo. Incluye 
 - [ ] >= 1 diagrama por leccion
 - [ ] >= 1 caso real si depth>=3
 - [ ] Referencias a fuentes incluidas
+- [ ] Ninguna tabla Markdown tiene 0 filas de datos (solo encabezado sin contenido)
 
 ### Codigo Ejecutable (25%)
 - [ ] Para cada lab, ejecutar syntax check segun lenguaje:
@@ -50,7 +51,7 @@ Asegurar calidad profesional del curso antes de marcarlo como completo. Incluye 
 
 ### Fuentes (15%)
 - [ ] >= 70% fuentes oficiales/academicas
-- [ ] Todos los enlaces funcionan
+- [ ] 100% de enlaces verificados HTTP 200 al momento de generacion (re-validar con WebFetch)
 - [ ] Fechas <= 3 anos
 
 ### Otros (10%)
@@ -59,6 +60,19 @@ Asegurar calidad profesional del curso antes de marcarlo como completo. Incluye 
 - [ ] Navegacion entre lecciones funciona
 
 ## Procedimiento de Validacion Automatica
+
+### Paso 0: Verificar Links Activos
+
+Para CADA URL presente en `research.sources[]` Y en el contenido markdown de todas las lecciones:
+
+1. Extraer todas las URLs con regex `https?://[^\s\)\"]+`
+2. Para cada URL usar `WebFetch` para verificar que responde con contenido valido
+3. Si la URL falla (error de red, timeout, HTTP 4xx/5xx, pagina "404 not found", "page not found"):
+   - Agregar a issues[] con severidad: CRITICAL
+   - Formato: `"Link roto: [URL] en [leccion/fuente donde aparece]"`
+4. Si todas las URLs responden: marcar como validado
+
+**Regla**: Si hay CUALQUIER link roto → DETENER y exigir URL alternativa al usuario antes de continuar. No omitir ni ignorar links rotos.
 
 ### Paso 1: Validar Sintaxis de Labs
 
@@ -84,6 +98,20 @@ Para CADA archivo de lab generado:
    - Severidad: CRITICAL
 5. Si EXIT_CODE == 0: marcar bloque como validado
 
+### Paso 1.5: Validar Tablas Markdown
+
+Para CADA leccion generada:
+
+1. Buscar bloques de tabla con regex: detectar lineas que contengan `|` seguidas de linea `|---|`
+2. Contar las filas de datos despues de la linea separadora `|---|`
+3. Si una tabla tiene 0 filas de datos (solo encabezado + separador, sin contenido):
+   - Agregar a issues[] con severidad: HIGH
+   - Formato: `"Tabla vacia en leccion [nombre]: tabla con encabezado [columnas] sin filas de datos"`
+   - Accion inmediata: completar la tabla con minimo 2 filas de datos reales antes de continuar
+4. Si todas las tablas tienen >= 1 fila: marcar como validado
+
+**Penalizacion**: -15% de Calidad de Contenido por cada tabla vacia encontrada.
+
 ### Paso 2: Validar Formato de Quizzes
 
 Para CADA quiz generado:
@@ -96,6 +124,9 @@ Para CADA quiz generado:
    - Si alguno esta fuera de rango: agregar a issues[] con severidad CRITICAL
 4. Verificar que TODAS las questions tienen `explanation` no vacio
    - Si alguna esta vacia: agregar a issues[] con severidad HIGH
+5. Verificar deduplicacion cross-modulo: comparar las primeras 10 palabras del enunciado de cada pregunta (normalizado: minusculas, sin puntuacion) entre TODOS los quizzes del curso
+   - Si se detecta pregunta duplicada o muy similar (misma huella): agregar a issues[] con severidad HIGH
+   - Formato: `"Pregunta duplicada: '[inicio pregunta]...' aparece en modulo X y modulo Y"`
 
 ### Paso 3: Calcular Score
 
@@ -105,6 +136,9 @@ Reglas de penalizacion:
   (NO se puede dar puntos parciales si hay codigo roto)
 - Si ALGUNA pregunta no es MULTIPLE_CHOICE: deducir 50% de Calidad de Contenido
 - Si ALGUNA pregunta no tiene 4 opciones: deducir 50% de Calidad de Contenido
+- Si hay preguntas duplicadas cross-modulo: deducir 20% de Calidad de Contenido
+- Por cada tabla vacia detectada: deducir 15% de Calidad de Contenido
+- Si hay CUALQUIER link roto: Fuentes = 0% (NO se puede dar puntos si hay links muertos)
 
 Score = (completitud * 0.25) +
         (calidad * 0.25) +

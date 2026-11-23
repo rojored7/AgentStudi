@@ -28,6 +28,12 @@ Crear evaluaciones que verifiquen comprension de conceptos y habilidades practic
    - NO generar TRUE_FALSE, MULTIPLE_SELECT ni SHORT_ANSWER bajo ninguna circunstancia
    - correctAnswer = indice numerico (0, 1, 2 o 3)
 4. **Agregar explicaciones** a cada respuesta correcta
+5. **Verificar deduplicacion cross-modulo** antes de entregar el quiz:
+   - Calcular la huella de cada pregunta nueva: primeras 10 palabras del enunciado en minusculas sin puntuacion
+   - Comparar contra el registro global `usedQuestionFingerprints` que acumula TODAS las preguntas de modulos anteriores
+   - Si la huella ya existe: regenerar la pregunta desde un angulo diferente (maximo 2 intentos)
+   - Si despues de 2 intentos sigue siendo duplicada: cambiar completamente el concepto evaluado
+   - Agregar la huella de cada pregunta aprobada al registro global antes de pasar al siguiente modulo
 
 ## Reglas Estrictas
 
@@ -40,6 +46,7 @@ Crear evaluaciones que verifiquen comprension de conceptos y habilidades practic
 - `explanation` es OBLIGATORIO para cada pregunta (no puede estar vacio)
 - Cada opcion debe tener longitud similar para no delatar la correcta
 - Mezclar la posicion de la respuesta correcta (no siempre en la misma posicion)
+- Cada pregunta DEBE ser unica en todo el curso: verificar contra `usedQuestionFingerprints` antes de confirmar
 
 ## Formato
 
@@ -87,6 +94,7 @@ Antes de entregar un quiz, verificar:
 - [ ] Todas las preguntas tienen `explanation` no vacio
 - [ ] No hay opciones duplicadas dentro de una misma pregunta
 - [ ] La respuesta correcta esta distribuida entre posiciones 0-3
+- [ ] Ninguna pregunta es duplicada respecto a modulos anteriores (huella no esta en `usedQuestionFingerprints`)
 
 ## Tiempo Estimado
 
